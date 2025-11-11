@@ -2,6 +2,7 @@ from mcp.server.fastmcp import FastMCP
 from sequential_thinking.lib import SequentialThinkingServer
 from typing import Dict, Any
 import os
+import json
 
 PORT = int(os.environ.get("PORT", 10000))
 
@@ -78,12 +79,14 @@ def sequential_thinking(
     
     # Process the thought
     result = thinking_server.process_thought(input_data)
-    
-    # Return the text content from the result
+
+    # Parse the JSON string result back to a dictionary
     if result.get("isError"):
-        return {"error": result["content"][0]["text"], "status": "failed"}
+        error_data = json.loads(result["content"][0]["text"])
+        return {"error": error_data.get("error", "Unknown error"), "status": "failed"}
     else:
-        return result["content"][0]["text"]
+        # Parse the JSON string to return as a dictionary
+        return json.loads(result["content"][0]["text"])
 
 
 # Run the server
