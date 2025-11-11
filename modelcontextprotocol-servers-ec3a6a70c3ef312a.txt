@@ -1,0 +1,1010 @@
+Directory structure:
+└── sequentialthinking/
+    ├── README.md
+    ├── Dockerfile
+    ├── index.ts
+    ├── lib.ts
+    ├── package.json
+    ├── tsconfig.json
+    ├── vitest.config.ts
+    └── __tests__/
+        └── lib.test.ts
+
+================================================
+FILE: src/sequentialthinking/README.md
+================================================
+# Sequential Thinking MCP Server
+
+An MCP server implementation that provides a tool for dynamic and reflective problem-solving through a structured thinking process.
+
+## Features
+
+- Break down complex problems into manageable steps
+- Revise and refine thoughts as understanding deepens
+- Branch into alternative paths of reasoning
+- Adjust the total number of thoughts dynamically
+- Generate and verify solution hypotheses
+
+## Tool
+
+### sequential_thinking
+
+Facilitates a detailed, step-by-step thinking process for problem-solving and analysis.
+
+**Inputs:**
+- `thought` (string): The current thinking step
+- `nextThoughtNeeded` (boolean): Whether another thought step is needed
+- `thoughtNumber` (integer): Current thought number
+- `totalThoughts` (integer): Estimated total thoughts needed
+- `isRevision` (boolean, optional): Whether this revises previous thinking
+- `revisesThought` (integer, optional): Which thought is being reconsidered
+- `branchFromThought` (integer, optional): Branching point thought number
+- `branchId` (string, optional): Branch identifier
+- `needsMoreThoughts` (boolean, optional): If more thoughts are needed
+
+## Usage
+
+The Sequential Thinking tool is designed for:
+- Breaking down complex problems into steps
+- Planning and design with room for revision
+- Analysis that might need course correction
+- Problems where the full scope might not be clear initially
+- Tasks that need to maintain context over multiple steps
+- Situations where irrelevant information needs to be filtered out
+
+## Configuration
+
+### Usage with Claude Desktop
+
+Add this to your `claude_desktop_config.json`:
+
+#### npx
+
+```json
+{
+  "mcpServers": {
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    }
+  }
+}
+```
+
+#### docker
+
+```json
+{
+  "mcpServers": {
+    "sequentialthinking": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "mcp/sequentialthinking"
+      ]
+    }
+  }
+}
+```
+
+To disable logging of thought information set env var: `DISABLE_THOUGHT_LOGGING` to `true`.
+Comment
+
+### Usage with VS Code
+
+For quick installation, click one of the installation buttons below...
+
+[![Install with NPX in VS Code](https://img.shields.io/badge/VS_Code-NPM-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-sequential-thinking%22%5D%7D) [![Install with NPX in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-NPM-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22npx%22%2C%22args%22%3A%5B%22-y%22%2C%22%40modelcontextprotocol%2Fserver-sequential-thinking%22%5D%7D&quality=insiders)
+
+[![Install with Docker in VS Code](https://img.shields.io/badge/VS_Code-Docker-0098FF?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22--rm%22%2C%22-i%22%2C%22mcp%2Fsequentialthinking%22%5D%7D) [![Install with Docker in VS Code Insiders](https://img.shields.io/badge/VS_Code_Insiders-Docker-24bfa5?style=flat-square&logo=visualstudiocode&logoColor=white)](https://insiders.vscode.dev/redirect/mcp/install?name=sequentialthinking&config=%7B%22command%22%3A%22docker%22%2C%22args%22%3A%5B%22run%22%2C%22--rm%22%2C%22-i%22%2C%22mcp%2Fsequentialthinking%22%5D%7D&quality=insiders)
+
+For manual installation, you can configure the MCP server using one of these methods:
+
+**Method 1: User Configuration (Recommended)**
+Add the configuration to your user-level MCP configuration file. Open the Command Palette (`Ctrl + Shift + P`) and run `MCP: Open User Configuration`. This will open your user `mcp.json` file where you can add the server configuration.
+
+**Method 2: Workspace Configuration**
+Alternatively, you can add the configuration to a file called `.vscode/mcp.json` in your workspace. This will allow you to share the configuration with others.
+
+> For more details about MCP configuration in VS Code, see the [official VS Code MCP documentation](https://code.visualstudio.com/docs/copilot/mcp).
+
+For NPX installation:
+
+```json
+{
+  "servers": {
+    "sequential-thinking": {
+      "command": "npx",
+      "args": [
+        "-y",
+        "@modelcontextprotocol/server-sequential-thinking"
+      ]
+    }
+  }
+}
+```
+
+For Docker installation:
+
+```json
+{
+  "servers": {
+    "sequential-thinking": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--rm",
+        "-i",
+        "mcp/sequentialthinking"
+      ]
+    }
+  }
+}
+```
+
+## Building
+
+Docker:
+
+```bash
+docker build -t mcp/sequentialthinking -f src/sequentialthinking/Dockerfile .
+```
+
+## License
+
+This MCP server is licensed under the MIT License. This means you are free to use, modify, and distribute the software, subject to the terms and conditions of the MIT License. For more details, please see the LICENSE file in the project repository.
+
+
+
+================================================
+FILE: src/sequentialthinking/Dockerfile
+================================================
+FROM node:22.12-alpine AS builder
+
+COPY src/sequentialthinking /app
+COPY tsconfig.json /tsconfig.json
+
+WORKDIR /app
+
+RUN --mount=type=cache,target=/root/.npm npm install
+
+RUN --mount=type=cache,target=/root/.npm-production npm ci --ignore-scripts --omit-dev
+
+FROM node:22-alpine AS release
+
+COPY --from=builder /app/dist /app/dist
+COPY --from=builder /app/package.json /app/package.json
+COPY --from=builder /app/package-lock.json /app/package-lock.json
+
+ENV NODE_ENV=production
+
+WORKDIR /app
+
+RUN npm ci --ignore-scripts --omit-dev
+
+ENTRYPOINT ["node", "dist/index.js"]
+
+
+
+================================================
+FILE: src/sequentialthinking/index.ts
+================================================
+#!/usr/bin/env node
+
+import { Server } from "@modelcontextprotocol/sdk/server/index.js";
+import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
+import {
+  CallToolRequestSchema,
+  ListToolsRequestSchema,
+  Tool,
+} from "@modelcontextprotocol/sdk/types.js";
+import { SequentialThinkingServer } from './lib.js';
+
+const SEQUENTIAL_THINKING_TOOL: Tool = {
+  name: "sequentialthinking",
+  description: `A detailed tool for dynamic and reflective problem-solving through thoughts.
+This tool helps analyze problems through a flexible thinking process that can adapt and evolve.
+Each thought can build on, question, or revise previous insights as understanding deepens.
+
+When to use this tool:
+- Breaking down complex problems into steps
+- Planning and design with room for revision
+- Analysis that might need course correction
+- Problems where the full scope might not be clear initially
+- Problems that require a multi-step solution
+- Tasks that need to maintain context over multiple steps
+- Situations where irrelevant information needs to be filtered out
+
+Key features:
+- You can adjust total_thoughts up or down as you progress
+- You can question or revise previous thoughts
+- You can add more thoughts even after reaching what seemed like the end
+- You can express uncertainty and explore alternative approaches
+- Not every thought needs to build linearly - you can branch or backtrack
+- Generates a solution hypothesis
+- Verifies the hypothesis based on the Chain of Thought steps
+- Repeats the process until satisfied
+- Provides a correct answer
+
+Parameters explained:
+- thought: Your current thinking step, which can include:
+* Regular analytical steps
+* Revisions of previous thoughts
+* Questions about previous decisions
+* Realizations about needing more analysis
+* Changes in approach
+* Hypothesis generation
+* Hypothesis verification
+- next_thought_needed: True if you need more thinking, even if at what seemed like the end
+- thought_number: Current number in sequence (can go beyond initial total if needed)
+- total_thoughts: Current estimate of thoughts needed (can be adjusted up/down)
+- is_revision: A boolean indicating if this thought revises previous thinking
+- revises_thought: If is_revision is true, which thought number is being reconsidered
+- branch_from_thought: If branching, which thought number is the branching point
+- branch_id: Identifier for the current branch (if any)
+- needs_more_thoughts: If reaching end but realizing more thoughts needed
+
+You should:
+1. Start with an initial estimate of needed thoughts, but be ready to adjust
+2. Feel free to question or revise previous thoughts
+3. Don't hesitate to add more thoughts if needed, even at the "end"
+4. Express uncertainty when present
+5. Mark thoughts that revise previous thinking or branch into new paths
+6. Ignore information that is irrelevant to the current step
+7. Generate a solution hypothesis when appropriate
+8. Verify the hypothesis based on the Chain of Thought steps
+9. Repeat the process until satisfied with the solution
+10. Provide a single, ideally correct answer as the final output
+11. Only set next_thought_needed to false when truly done and a satisfactory answer is reached`,
+  inputSchema: {
+    type: "object",
+    properties: {
+      thought: {
+        type: "string",
+        description: "Your current thinking step"
+      },
+      nextThoughtNeeded: {
+        type: "boolean",
+        description: "Whether another thought step is needed"
+      },
+      thoughtNumber: {
+        type: "integer",
+        description: "Current thought number (numeric value, e.g., 1, 2, 3)",
+        minimum: 1
+      },
+      totalThoughts: {
+        type: "integer",
+        description: "Estimated total thoughts needed (numeric value, e.g., 5, 10)",
+        minimum: 1
+      },
+      isRevision: {
+        type: "boolean",
+        description: "Whether this revises previous thinking"
+      },
+      revisesThought: {
+        type: "integer",
+        description: "Which thought is being reconsidered",
+        minimum: 1
+      },
+      branchFromThought: {
+        type: "integer",
+        description: "Branching point thought number",
+        minimum: 1
+      },
+      branchId: {
+        type: "string",
+        description: "Branch identifier"
+      },
+      needsMoreThoughts: {
+        type: "boolean",
+        description: "If more thoughts are needed"
+      }
+    },
+    required: ["thought", "nextThoughtNeeded", "thoughtNumber", "totalThoughts"]
+  }
+};
+
+const server = new Server(
+  {
+    name: "sequential-thinking-server",
+    version: "0.2.0",
+  },
+  {
+    capabilities: {
+      tools: {},
+    },
+  }
+);
+
+const thinkingServer = new SequentialThinkingServer();
+
+server.setRequestHandler(ListToolsRequestSchema, async () => ({
+  tools: [SEQUENTIAL_THINKING_TOOL],
+}));
+
+server.setRequestHandler(CallToolRequestSchema, async (request) => {
+  if (request.params.name === "sequentialthinking") {
+    return thinkingServer.processThought(request.params.arguments);
+  }
+
+  return {
+    content: [{
+      type: "text",
+      text: `Unknown tool: ${request.params.name}`
+    }],
+    isError: true
+  };
+});
+
+async function runServer() {
+  const transport = new StdioServerTransport();
+  await server.connect(transport);
+  console.error("Sequential Thinking MCP Server running on stdio");
+}
+
+runServer().catch((error) => {
+  console.error("Fatal error running server:", error);
+  process.exit(1);
+});
+
+
+
+================================================
+FILE: src/sequentialthinking/lib.ts
+================================================
+import chalk from 'chalk';
+
+export interface ThoughtData {
+  thought: string;
+  thoughtNumber: number;
+  totalThoughts: number;
+  isRevision?: boolean;
+  revisesThought?: number;
+  branchFromThought?: number;
+  branchId?: string;
+  needsMoreThoughts?: boolean;
+  nextThoughtNeeded: boolean;
+}
+
+export class SequentialThinkingServer {
+  private thoughtHistory: ThoughtData[] = [];
+  private branches: Record<string, ThoughtData[]> = {};
+  private disableThoughtLogging: boolean;
+
+  constructor() {
+    this.disableThoughtLogging = (process.env.DISABLE_THOUGHT_LOGGING || "").toLowerCase() === "true";
+  }
+
+  private validateThoughtData(input: unknown): ThoughtData {
+    const data = input as Record<string, unknown>;
+
+    if (!data.thought || typeof data.thought !== 'string') {
+      throw new Error('Invalid thought: must be a string');
+    }
+    if (!data.thoughtNumber || typeof data.thoughtNumber !== 'number') {
+      throw new Error('Invalid thoughtNumber: must be a number');
+    }
+    if (!data.totalThoughts || typeof data.totalThoughts !== 'number') {
+      throw new Error('Invalid totalThoughts: must be a number');
+    }
+    if (typeof data.nextThoughtNeeded !== 'boolean') {
+      throw new Error('Invalid nextThoughtNeeded: must be a boolean');
+    }
+
+    return {
+      thought: data.thought,
+      thoughtNumber: data.thoughtNumber,
+      totalThoughts: data.totalThoughts,
+      nextThoughtNeeded: data.nextThoughtNeeded,
+      isRevision: data.isRevision as boolean | undefined,
+      revisesThought: data.revisesThought as number | undefined,
+      branchFromThought: data.branchFromThought as number | undefined,
+      branchId: data.branchId as string | undefined,
+      needsMoreThoughts: data.needsMoreThoughts as boolean | undefined,
+    };
+  }
+
+  private formatThought(thoughtData: ThoughtData): string {
+    const { thoughtNumber, totalThoughts, thought, isRevision, revisesThought, branchFromThought, branchId } = thoughtData;
+
+    let prefix = '';
+    let context = '';
+
+    if (isRevision) {
+      prefix = chalk.yellow('🔄 Revision');
+      context = ` (revising thought ${revisesThought})`;
+    } else if (branchFromThought) {
+      prefix = chalk.green('🌿 Branch');
+      context = ` (from thought ${branchFromThought}, ID: ${branchId})`;
+    } else {
+      prefix = chalk.blue('💭 Thought');
+      context = '';
+    }
+
+    const header = `${prefix} ${thoughtNumber}/${totalThoughts}${context}`;
+    const border = '─'.repeat(Math.max(header.length, thought.length) + 4);
+
+    return `
+┌${border}┐
+│ ${header} │
+├${border}┤
+│ ${thought.padEnd(border.length - 2)} │
+└${border}┘`;
+  }
+
+  public processThought(input: unknown): { content: Array<{ type: string; text: string }>; isError?: boolean } {
+    try {
+      const validatedInput = this.validateThoughtData(input);
+
+      if (validatedInput.thoughtNumber > validatedInput.totalThoughts) {
+        validatedInput.totalThoughts = validatedInput.thoughtNumber;
+      }
+
+      this.thoughtHistory.push(validatedInput);
+
+      if (validatedInput.branchFromThought && validatedInput.branchId) {
+        if (!this.branches[validatedInput.branchId]) {
+          this.branches[validatedInput.branchId] = [];
+        }
+        this.branches[validatedInput.branchId].push(validatedInput);
+      }
+
+      if (!this.disableThoughtLogging) {
+        const formattedThought = this.formatThought(validatedInput);
+        console.error(formattedThought);
+      }
+
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            thoughtNumber: validatedInput.thoughtNumber,
+            totalThoughts: validatedInput.totalThoughts,
+            nextThoughtNeeded: validatedInput.nextThoughtNeeded,
+            branches: Object.keys(this.branches),
+            thoughtHistoryLength: this.thoughtHistory.length
+          }, null, 2)
+        }]
+      };
+    } catch (error) {
+      return {
+        content: [{
+          type: "text",
+          text: JSON.stringify({
+            error: error instanceof Error ? error.message : String(error),
+            status: 'failed'
+          }, null, 2)
+        }],
+        isError: true
+      };
+    }
+  }
+}
+
+
+
+================================================
+FILE: src/sequentialthinking/package.json
+================================================
+{
+  "name": "@modelcontextprotocol/server-sequential-thinking",
+  "version": "0.6.2",
+  "description": "MCP server for sequential thinking and problem solving",
+  "license": "MIT",
+  "author": "Anthropic, PBC (https://anthropic.com)",
+  "homepage": "https://modelcontextprotocol.io",
+  "bugs": "https://github.com/modelcontextprotocol/servers/issues",
+  "type": "module",
+  "bin": {
+    "mcp-server-sequential-thinking": "dist/index.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsc && shx chmod +x dist/*.js",
+    "prepare": "npm run build",
+    "watch": "tsc --watch",
+    "test": "vitest run --coverage"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.19.1",
+    "chalk": "^5.3.0",
+    "yargs": "^17.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22",
+    "@types/yargs": "^17.0.32",
+    "@vitest/coverage-v8": "^2.1.8",
+    "shx": "^0.3.4",
+    "typescript": "^5.3.3",
+    "vitest": "^2.1.8"
+  }
+}
+
+
+================================================
+FILE: src/sequentialthinking/tsconfig.json
+================================================
+{
+  "extends": "../../tsconfig.json",
+  "compilerOptions": {
+    "outDir": "./dist",
+    "rootDir": ".",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext"
+  },
+  "include": ["./**/*.ts"]
+}
+
+
+
+================================================
+FILE: src/sequentialthinking/vitest.config.ts
+================================================
+import { defineConfig } from 'vitest/config';
+
+export default defineConfig({
+  test: {
+    globals: true,
+    environment: 'node',
+    include: ['**/__tests__/**/*.test.ts'],
+    coverage: {
+      provider: 'v8',
+      include: ['**/*.ts'],
+      exclude: ['**/__tests__/**', '**/dist/**'],
+    },
+  },
+});
+
+
+
+================================================
+FILE: src/sequentialthinking/__tests__/lib.test.ts
+================================================
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
+import { SequentialThinkingServer, ThoughtData } from '../lib.js';
+
+// Mock chalk to avoid ESM issues
+vi.mock('chalk', () => {
+  const chalkMock = {
+    yellow: (str: string) => str,
+    green: (str: string) => str,
+    blue: (str: string) => str,
+  };
+  return {
+    default: chalkMock,
+  };
+});
+
+describe('SequentialThinkingServer', () => {
+  let server: SequentialThinkingServer;
+
+  beforeEach(() => {
+    // Disable thought logging for tests
+    process.env.DISABLE_THOUGHT_LOGGING = 'true';
+    server = new SequentialThinkingServer();
+  });
+
+  describe('processThought - validation', () => {
+    it('should reject input with missing thought', () => {
+      const input = {
+        thoughtNumber: 1,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid thought');
+    });
+
+    it('should reject input with non-string thought', () => {
+      const input = {
+        thought: 123,
+        thoughtNumber: 1,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid thought');
+    });
+
+    it('should reject input with missing thoughtNumber', () => {
+      const input = {
+        thought: 'Test thought',
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid thoughtNumber');
+    });
+
+    it('should reject input with non-number thoughtNumber', () => {
+      const input = {
+        thought: 'Test thought',
+        thoughtNumber: '1',
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid thoughtNumber');
+    });
+
+    it('should reject input with missing totalThoughts', () => {
+      const input = {
+        thought: 'Test thought',
+        thoughtNumber: 1,
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid totalThoughts');
+    });
+
+    it('should reject input with non-number totalThoughts', () => {
+      const input = {
+        thought: 'Test thought',
+        thoughtNumber: 1,
+        totalThoughts: '3',
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid totalThoughts');
+    });
+
+    it('should reject input with missing nextThoughtNeeded', () => {
+      const input = {
+        thought: 'Test thought',
+        thoughtNumber: 1,
+        totalThoughts: 3
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid nextThoughtNeeded');
+    });
+
+    it('should reject input with non-boolean nextThoughtNeeded', () => {
+      const input = {
+        thought: 'Test thought',
+        thoughtNumber: 1,
+        totalThoughts: 3,
+        nextThoughtNeeded: 'true'
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid nextThoughtNeeded');
+    });
+  });
+
+  describe('processThought - valid inputs', () => {
+    it('should accept valid basic thought', () => {
+      const input = {
+        thought: 'This is my first thought',
+        thoughtNumber: 1,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBeUndefined();
+
+      const data = JSON.parse(result.content[0].text);
+      expect(data.thoughtNumber).toBe(1);
+      expect(data.totalThoughts).toBe(3);
+      expect(data.nextThoughtNeeded).toBe(true);
+      expect(data.thoughtHistoryLength).toBe(1);
+    });
+
+    it('should accept thought with optional fields', () => {
+      const input = {
+        thought: 'Revising my earlier idea',
+        thoughtNumber: 2,
+        totalThoughts: 3,
+        nextThoughtNeeded: true,
+        isRevision: true,
+        revisesThought: 1,
+        needsMoreThoughts: false
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBeUndefined();
+
+      const data = JSON.parse(result.content[0].text);
+      expect(data.thoughtNumber).toBe(2);
+      expect(data.thoughtHistoryLength).toBe(1);
+    });
+
+    it('should track multiple thoughts in history', () => {
+      const input1 = {
+        thought: 'First thought',
+        thoughtNumber: 1,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const input2 = {
+        thought: 'Second thought',
+        thoughtNumber: 2,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const input3 = {
+        thought: 'Final thought',
+        thoughtNumber: 3,
+        totalThoughts: 3,
+        nextThoughtNeeded: false
+      };
+
+      server.processThought(input1);
+      server.processThought(input2);
+      const result = server.processThought(input3);
+
+      const data = JSON.parse(result.content[0].text);
+      expect(data.thoughtHistoryLength).toBe(3);
+      expect(data.nextThoughtNeeded).toBe(false);
+    });
+
+    it('should auto-adjust totalThoughts if thoughtNumber exceeds it', () => {
+      const input = {
+        thought: 'Thought 5',
+        thoughtNumber: 5,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const result = server.processThought(input);
+      const data = JSON.parse(result.content[0].text);
+
+      expect(data.totalThoughts).toBe(5);
+    });
+  });
+
+  describe('processThought - branching', () => {
+    it('should track branches correctly', () => {
+      const input1 = {
+        thought: 'Main thought',
+        thoughtNumber: 1,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const input2 = {
+        thought: 'Branch A thought',
+        thoughtNumber: 2,
+        totalThoughts: 3,
+        nextThoughtNeeded: true,
+        branchFromThought: 1,
+        branchId: 'branch-a'
+      };
+
+      const input3 = {
+        thought: 'Branch B thought',
+        thoughtNumber: 2,
+        totalThoughts: 3,
+        nextThoughtNeeded: false,
+        branchFromThought: 1,
+        branchId: 'branch-b'
+      };
+
+      server.processThought(input1);
+      server.processThought(input2);
+      const result = server.processThought(input3);
+
+      const data = JSON.parse(result.content[0].text);
+      expect(data.branches).toContain('branch-a');
+      expect(data.branches).toContain('branch-b');
+      expect(data.branches.length).toBe(2);
+      expect(data.thoughtHistoryLength).toBe(3);
+    });
+
+    it('should allow multiple thoughts in same branch', () => {
+      const input1 = {
+        thought: 'Branch thought 1',
+        thoughtNumber: 1,
+        totalThoughts: 2,
+        nextThoughtNeeded: true,
+        branchFromThought: 1,
+        branchId: 'branch-a'
+      };
+
+      const input2 = {
+        thought: 'Branch thought 2',
+        thoughtNumber: 2,
+        totalThoughts: 2,
+        nextThoughtNeeded: false,
+        branchFromThought: 1,
+        branchId: 'branch-a'
+      };
+
+      server.processThought(input1);
+      const result = server.processThought(input2);
+
+      const data = JSON.parse(result.content[0].text);
+      expect(data.branches).toContain('branch-a');
+      expect(data.branches.length).toBe(1);
+    });
+  });
+
+  describe('processThought - edge cases', () => {
+    it('should reject empty thought string', () => {
+      const input = {
+        thought: '',
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        nextThoughtNeeded: false
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBe(true);
+      expect(result.content[0].text).toContain('Invalid thought');
+    });
+
+    it('should handle very long thought strings', () => {
+      const input = {
+        thought: 'a'.repeat(10000),
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        nextThoughtNeeded: false
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBeUndefined();
+    });
+
+    it('should handle thoughtNumber = 1, totalThoughts = 1', () => {
+      const input = {
+        thought: 'Only thought',
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        nextThoughtNeeded: false
+      };
+
+      const result = server.processThought(input);
+      expect(result.isError).toBeUndefined();
+
+      const data = JSON.parse(result.content[0].text);
+      expect(data.thoughtNumber).toBe(1);
+      expect(data.totalThoughts).toBe(1);
+    });
+
+    it('should handle nextThoughtNeeded = false', () => {
+      const input = {
+        thought: 'Final thought',
+        thoughtNumber: 3,
+        totalThoughts: 3,
+        nextThoughtNeeded: false
+      };
+
+      const result = server.processThought(input);
+      const data = JSON.parse(result.content[0].text);
+
+      expect(data.nextThoughtNeeded).toBe(false);
+    });
+  });
+
+  describe('processThought - response format', () => {
+    it('should return correct response structure on success', () => {
+      const input = {
+        thought: 'Test thought',
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        nextThoughtNeeded: false
+      };
+
+      const result = server.processThought(input);
+
+      expect(result).toHaveProperty('content');
+      expect(Array.isArray(result.content)).toBe(true);
+      expect(result.content.length).toBe(1);
+      expect(result.content[0]).toHaveProperty('type', 'text');
+      expect(result.content[0]).toHaveProperty('text');
+    });
+
+    it('should return correct error structure on failure', () => {
+      const input = {
+        thought: 'Test',
+        thoughtNumber: 1,
+        totalThoughts: 1
+        // missing nextThoughtNeeded
+      };
+
+      const result = server.processThought(input);
+
+      expect(result).toHaveProperty('isError', true);
+      expect(result).toHaveProperty('content');
+      expect(Array.isArray(result.content)).toBe(true);
+
+      const errorData = JSON.parse(result.content[0].text);
+      expect(errorData).toHaveProperty('error');
+      expect(errorData).toHaveProperty('status', 'failed');
+    });
+
+    it('should return valid JSON in response', () => {
+      const input = {
+        thought: 'Test thought',
+        thoughtNumber: 1,
+        totalThoughts: 1,
+        nextThoughtNeeded: false
+      };
+
+      const result = server.processThought(input);
+
+      expect(() => JSON.parse(result.content[0].text)).not.toThrow();
+    });
+  });
+
+  describe('processThought - with logging enabled', () => {
+    let serverWithLogging: SequentialThinkingServer;
+
+    beforeEach(() => {
+      // Enable thought logging for these tests
+      delete process.env.DISABLE_THOUGHT_LOGGING;
+      serverWithLogging = new SequentialThinkingServer();
+    });
+
+    afterEach(() => {
+      // Reset to disabled for other tests
+      process.env.DISABLE_THOUGHT_LOGGING = 'true';
+    });
+
+    it('should format and log regular thoughts', () => {
+      const input = {
+        thought: 'Test thought with logging',
+        thoughtNumber: 1,
+        totalThoughts: 3,
+        nextThoughtNeeded: true
+      };
+
+      const result = serverWithLogging.processThought(input);
+      expect(result.isError).toBeUndefined();
+    });
+
+    it('should format and log revision thoughts', () => {
+      const input = {
+        thought: 'Revised thought',
+        thoughtNumber: 2,
+        totalThoughts: 3,
+        nextThoughtNeeded: true,
+        isRevision: true,
+        revisesThought: 1
+      };
+
+      const result = serverWithLogging.processThought(input);
+      expect(result.isError).toBeUndefined();
+    });
+
+    it('should format and log branch thoughts', () => {
+      const input = {
+        thought: 'Branch thought',
+        thoughtNumber: 2,
+        totalThoughts: 3,
+        nextThoughtNeeded: false,
+        branchFromThought: 1,
+        branchId: 'branch-a'
+      };
+
+      const result = serverWithLogging.processThought(input);
+      expect(result.isError).toBeUndefined();
+    });
+  });
+});
+
+

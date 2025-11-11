@@ -1,0 +1,260 @@
+Directory structure:
+└── alejandro-ao-mcp-streamable-http/
+    ├── readme.md
+    ├── pyproject.toml
+    ├── runtime.txt
+    ├── server.py
+    ├── .python-version
+    └── fastapi_example/
+        ├── echo_server.py
+        ├── math_server.py
+        └── server.py
+
+================================================
+FILE: readme.md
+================================================
+# MCP Servers over Streamable HTTP — Step-by-Step Guide
+
+📝 **Read the full article here**: [MCP Servers over Streamable HTTP (Step-by-Step)](https://aibootcamp.dev/blog/remote-mcp-servers)
+
+
+---
+
+This repository contains a complete, working example of how to build and run an **MCP (Model Context Protocol) server** using Python, `mcp`, and `FastAPI`. You’ll learn how to:
+
+- Expose tools and functions over HTTP using the MCP protocol
+- Connect those tools to AI assistants like [Cursor](https://cursor.com/)
+- Use streamable HTTP as the transport
+- Mount multiple MCP servers in a FastAPI app
+
+---
+
+## 📁 Folder Structure
+
+```bash
+.
+├── docs/                        # Diagrams and assets (e.g., mcp-client-server.png)
+├── fastapi_example/            # Example mounting multiple MCP servers in FastAPI
+│   ├── echo_server.py          # A server exposing a simple echo tool
+│   ├── math_server.py          # A server exposing a math tool
+│   └── server.py               # FastAPI app that mounts both echo and math servers
+├── .gitignore
+├── .python-version             # Python version (for tools like pyenv or uv)
+├── pyproject.toml              # Project config and dependencies
+├── readme.md                   # You're here!
+├── runtime.txt                 # Python runtime for platforms like Render
+├── server.py                   # Basic standalone MCP server using Tavily search
+├── uv.lock                     # Lockfile for uv dependency manager
+```
+
+⸻
+
+🛠 Quickstart
+1.	Install uv (recommended Python package manager)
+
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
+
+2.	Install dependencies and set up environment
+
+```
+uv venv && source .venv/bin/activate
+uv pip install -r pyproject.toml
+```
+
+3.	Run the basic MCP server
+This uses the Tavily API to expose a simple web_search tool.
+
+```
+uv run server.py
+```
+
+4.	Run the FastAPI app with multiple MCP servers
+
+```
+uv run fastapi_example/server.py
+```
+
+This will mount:
+- http://localhost:8000/echo/mcp/
+- http://localhost:8000/math/mcp/
+
+⸻
+
+🧪 Debug with MCP Inspector
+1.	Install CLI support
+
+```bash
+uv add 'mcp[cli]'
+```
+
+2.	Launch the inspector
+
+```
+uv run mcp dev server.py
+```
+
+Then go to: `http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=...`
+
+
+
+⸻
+
+🔌 Connect to Cursor
+
+In Cursor, add your MCP server under Chat Settings > MCP Servers:
+```json
+{
+  "mcpServers": {
+    "tavily": {
+      "url": "http://localhost:8000/mcp/"
+    }
+  }
+}
+```
+
+✅ Note: You must include the trailing / in the URL.
+
+⸻
+
+
+
+================================================
+FILE: pyproject.toml
+================================================
+[project]
+name = "mcp-remote"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.12",
+    "mcp[cli]>=1.9.3",
+    "python-dotenv>=1.1.0",
+    "tavily-python>=0.7.7",
+]
+
+
+
+================================================
+FILE: runtime.txt
+================================================
+python-3.11.0
+
+
+================================================
+FILE: server.py
+================================================
+
+from mcp.server.fastmcp import FastMCP
+from tavily import TavilyClient
+from dotenv import load_dotenv
+from typing import Dict, List
+import os
+
+load_dotenv()
+
+if "TAVILY_API_KEY" not in os.environ:
+    raise Exception("TAVILY_API_KEY environment variable not set")
+  
+# Tavily API key
+TAVILY_API_KEY = os.environ["TAVILY_API_KEY"]
+
+# Initialize Tavily client
+tavily_client = TavilyClient(TAVILY_API_KEY)
+
+PORT = os.environ.get("PORT", 10000)
+
+# Create an MCP server
+mcp = FastMCP("web-search", host="0.0.0.0", port=PORT)
+
+# Add a tool that uses Tavily
+@mcp.tool()
+def web_search(query: str) -> List[Dict]:
+    """
+    Use this tool to search the web for information.
+
+    Args:
+        query: The search query.
+
+    Returns:
+        The search results.
+    """
+    try:
+        response = tavily_client.search(query)
+        return response["results"]
+    except Exception as e:
+        return "Error: " + str(e)
+
+# Run the server
+if __name__ == "__main__":
+    mcp.run(transport="streamable-http")
+
+
+================================================
+FILE: .python-version
+================================================
+3.11
+
+
+
+================================================
+FILE: fastapi_example/echo_server.py
+================================================
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP(name="EchoServer", stateless_http=True)
+
+
+@mcp.tool(description="A simple echo tool")
+def echo(message: str) -> str:
+    return f"Echo: {message}"
+
+
+
+================================================
+FILE: fastapi_example/math_server.py
+================================================
+from mcp.server.fastmcp import FastMCP
+
+mcp = FastMCP(name="MathServer", stateless_http=True)
+
+
+@mcp.tool(description="A simple add tool")
+def add_two(n: int) -> int:
+    return n + 2
+
+
+
+================================================
+FILE: fastapi_example/server.py
+================================================
+import contextlib
+from fastapi import FastAPI
+from echo_server import mcp as echo_mcp
+from math_server import mcp as math_mcp
+import os
+
+
+# Create a combined lifespan to manage both session managers
+@contextlib.asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with contextlib.AsyncExitStack() as stack:
+        await stack.enter_async_context(echo_mcp.session_manager.run())
+        await stack.enter_async_context(math_mcp.session_manager.run())
+        yield
+
+
+app = FastAPI(lifespan=lifespan)
+app.mount("/echo", echo_mcp.streamable_http_app())
+app.mount("/math", math_mcp.streamable_http_app())
+
+PORT = os.environ.get("PORT", 10000)
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port=PORT)
+
+
