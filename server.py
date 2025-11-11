@@ -4,16 +4,37 @@ from typing import Dict, Any
 import os
 import json
 
+# Get port from environment variable
 PORT = int(os.environ.get("PORT", 10000))
 
-# Create an MCP server
-mcp = FastMCP("sequential-thinking", host="0.0.0.0", port=PORT)
+# Create an MCP server with multiple tools
+# Using host and port parameters for streamable-http transport
+mcp = FastMCP("mcp-tools-server", host="0.0.0.0", port=PORT)
 
 # Initialize the sequential thinking server
 thinking_server = SequentialThinkingServer()
 
-# Add the sequential thinking tool
-@mcp.tool()
+# Tool 1: Echo - Simple echo tool for testing
+@mcp.tool(description="A simple echo tool that returns the message you send to it")
+def echo(message: str) -> Dict[str, str]:
+    """
+    Use this tool to test the MCP server connection and basic functionality.
+
+    Args:
+        message: The message to echo back
+
+    Returns:
+        A dictionary with the echoed message, its length, and status
+    """
+    return {
+        "echo": message,
+        "length": len(message),
+        "status": "success"
+    }
+
+
+# Tool 2: Sequential Thinking - Advanced problem-solving tool
+@mcp.tool(description="A detailed tool for dynamic and reflective problem-solving through structured thoughts")
 def sequential_thinking(
     thought: str,
     nextThoughtNeeded: bool,

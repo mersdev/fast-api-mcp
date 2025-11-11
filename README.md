@@ -9,9 +9,40 @@ A FastAPI-based MCP (Model Context Protocol) server that provides a sequential t
 - **Branching Reasoning**: Branch into alternative paths of reasoning
 - **Adaptive Planning**: Adjust the total number of thoughts dynamically
 - **Hypothesis Generation & Verification**: Generate and verify solution hypotheses
+- **Echo Tool**: Simple echo tool for testing and debugging MCP connections
 - **HTTP Transport**: Accessible over streamable HTTP using FastAPI
 
-## Tool: sequential_thinking
+## Tools
+
+### Tool: echo
+
+A simple echo tool that returns the message you send to it. Useful for testing the MCP server connection and basic functionality.
+
+**Inputs:**
+- `message` (string): The message to echo back
+
+**Returns:**
+- `echo` (string): The original message
+- `length` (integer): The length of the message
+- `status` (string): Status of the operation (always "success")
+
+**Example:**
+```json
+{
+  "message": "Hello, World!"
+}
+```
+
+**Response:**
+```json
+{
+  "echo": "Hello, World!",
+  "length": 13,
+  "status": "success"
+}
+```
+
+### Tool: sequential_thinking
 
 Facilitates a detailed, step-by-step thinking process for problem-solving and analysis.
 
@@ -181,7 +212,30 @@ The Sequential Thinking tool is designed for:
 
 ## Testing
 
-To verify the tool works correctly, run the test script:
+### Test the Echo Tool
+
+To verify the echo tool works correctly:
+
+```bash
+# Windows
+.venv\Scripts\activate
+python test_echo.py
+
+# Linux/Mac
+source .venv/bin/activate
+python test_echo.py
+```
+
+The echo test verifies:
+- ✅ Simple message echo
+- ✅ Empty message handling
+- ✅ Long message support
+- ✅ Special characters support
+- ✅ Correct length calculation
+
+### Test the Sequential Thinking Tool
+
+To verify the sequential thinking tool works correctly:
 
 ```bash
 # Windows
@@ -204,11 +258,12 @@ The test script verifies:
 
 ```
 .
-├── server.py                    # Main FastAPI MCP server
+├── server.py                    # Main FastAPI MCP server (with echo & sequential_thinking tools)
 ├── sequential_thinking/         # Sequential thinking library
 │   ├── __init__.py
 │   └── lib.py                   # Core logic for thought processing
-├── test_tool.py                 # Test script for the tool
+├── test_echo.py                 # Test script for the echo tool
+├── test_tool.py                 # Test script for the sequential thinking tool
 ├── setup.bat                    # Windows setup script
 ├── setup.sh                     # Linux/Mac setup script
 ├── run.bat                      # Windows run script
@@ -218,13 +273,22 @@ The test script verifies:
 ├── runtime.txt                  # Python runtime version
 ├── .python-version              # Python version for pyenv/uv
 ├── .gitignore                   # Git ignore rules
+├── FIX_SUMMARY.md              # Documentation of the validation error fix
 └── README.md                    # This file
 ```
 
 ## How It Works
 
-The server uses the FastMCP library to expose the sequential thinking tool over HTTP. The tool:
+The server uses the FastMCP library to expose multiple MCP tools over HTTP:
 
+### Echo Tool
+A simple tool that:
+1. Accepts a message string
+2. Returns the message along with its length
+3. Useful for testing MCP connections
+
+### Sequential Thinking Tool
+A complex tool that:
 1. Accepts thought inputs with metadata (thought number, total thoughts, etc.)
 2. Validates the input data
 3. Maintains a history of thoughts
