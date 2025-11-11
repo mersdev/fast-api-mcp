@@ -30,46 +30,83 @@ Facilitates a detailed, step-by-step thinking process for problem-solving and an
 
 ### Prerequisites
 - Python 3.11 or higher
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
 
-### Using uv (Recommended)
+### Quick Setup (Recommended)
 
-1. Install uv:
+#### Windows
 ```bash
-curl -LsSf https://astral.sh/uv/install.sh | sh
-```
-
-2. Clone the repository:
-```bash
+# Clone the repository
 git clone https://github.com/mersdev/fast-api-mcp.git
 cd fast-api-mcp
+
+# Run the setup script (creates venv and installs dependencies)
+setup.bat
 ```
 
-3. Install dependencies:
+#### Linux/Mac
 ```bash
-uv venv && source .venv/bin/activate  # On Windows: .venv\Scripts\activate
-uv pip install -e .
-```
-
-### Using pip
-
-```bash
+# Clone the repository
 git clone https://github.com/mersdev/fast-api-mcp.git
 cd fast-api-mcp
-pip install -e .
+
+# Make scripts executable
+chmod +x setup.sh run.sh
+
+# Run the setup script (creates venv and installs dependencies)
+./setup.sh
+```
+
+### Manual Setup
+
+If you prefer to set up manually:
+
+```bash
+# Clone the repository
+git clone https://github.com/mersdev/fast-api-mcp.git
+cd fast-api-mcp
+
+# Create virtual environment
+python -m venv .venv
+
+# Activate virtual environment
+# On Windows:
+.venv\Scripts\activate
+# On Linux/Mac:
+source .venv/bin/activate
+
+# Install dependencies
+pip install -r requirements.txt
 ```
 
 ## Usage
 
 ### Running the Server
 
-Start the server using uv:
+#### Quick Start (Recommended)
+
+**Windows:**
 ```bash
-uv run server.py
+run.bat
 ```
 
-Or with Python directly:
+**Linux/Mac:**
 ```bash
+./run.sh
+```
+
+#### Manual Start
+
+Activate the virtual environment and run the server:
+
+**Windows:**
+```bash
+.venv\Scripts\activate
+python server.py
+```
+
+**Linux/Mac:**
+```bash
+source .venv/bin/activate
 python server.py
 ```
 
@@ -77,19 +114,22 @@ The server will start on `http://0.0.0.0:10000` by default.
 
 You can customize the port using the `PORT` environment variable:
 ```bash
-PORT=8000 uv run server.py
+PORT=8000 python server.py
 ```
 
 ### Debug with MCP Inspector
 
-1. Install CLI support (if not already installed):
-```bash
-uv add 'mcp[cli]'
-```
+1. Make sure your virtual environment is activated and dependencies are installed
 
 2. Launch the inspector:
 ```bash
-uv run mcp dev server.py
+# Windows
+.venv\Scripts\activate
+mcp dev server.py
+
+# Linux/Mac
+source .venv/bin/activate
+mcp dev server.py
 ```
 
 Then go to: `http://localhost:6274/?MCP_PROXY_AUTH_TOKEN=...`
@@ -147,9 +187,15 @@ The Sequential Thinking tool is designed for:
 ├── sequential_thinking/         # Sequential thinking library
 │   ├── __init__.py
 │   └── lib.py                   # Core logic for thought processing
-├── pyproject.toml               # Project dependencies
+├── setup.bat                    # Windows setup script
+├── setup.sh                     # Linux/Mac setup script
+├── run.bat                      # Windows run script
+├── run.sh                       # Linux/Mac run script
+├── requirements.txt             # Python dependencies
+├── pyproject.toml               # Project metadata
 ├── runtime.txt                  # Python runtime version
 ├── .python-version              # Python version for pyenv/uv
+├── .gitignore                   # Git ignore rules
 └── README.md                    # This file
 ```
 
