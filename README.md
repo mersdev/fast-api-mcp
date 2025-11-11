@@ -179,6 +179,27 @@ The Sequential Thinking tool is designed for:
 - `PORT`: Server port (default: 10000)
 - `DISABLE_THOUGHT_LOGGING`: Set to `true` to disable thought logging to console (default: false)
 
+## Testing
+
+To verify the tool works correctly, run the test script:
+
+```bash
+# Windows
+.venv\Scripts\activate
+python test_tool.py
+
+# Linux/Mac
+source .venv/bin/activate
+python test_tool.py
+```
+
+The test script verifies:
+- ✅ Tool returns proper dictionary output (not JSON strings)
+- ✅ Thought sequencing works correctly
+- ✅ Revisions are handled properly
+- ✅ Thought history is maintained
+- ✅ No Pydantic validation errors
+
 ## Project Structure
 
 ```
@@ -187,6 +208,7 @@ The Sequential Thinking tool is designed for:
 ├── sequential_thinking/         # Sequential thinking library
 │   ├── __init__.py
 │   └── lib.py                   # Core logic for thought processing
+├── test_tool.py                 # Test script for the tool
 ├── setup.bat                    # Windows setup script
 ├── setup.sh                     # Linux/Mac setup script
 ├── run.bat                      # Windows run script
@@ -241,6 +263,40 @@ Based on:
 ## Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+## Troubleshooting
+
+### Server won't start
+- Make sure Python 3.11+ is installed
+- Check if port 10000 is available
+- Verify all dependencies are installed: `pip list`
+- Make sure virtual environment is activated
+
+### Tool not appearing in AI assistant
+- Restart the AI assistant after adding the configuration
+- Check that the server is running
+- Verify the URL is correct in the configuration
+- Check server logs for any errors
+
+### Validation Error: "Input should be a valid dictionary"
+This error has been **fixed** in the latest version. The tool now properly returns dictionary objects instead of JSON strings.
+
+**To verify the fix:**
+```bash
+python test_tool.py
+```
+
+**If you still see this error:**
+1. Make sure you have the latest version: `git pull`
+2. Restart the server
+3. Clear any cached connections in your AI assistant
+4. Check that `server.py` imports `json` and parses the result
+
+### Port already in use
+```bash
+# Change the port
+PORT=8000 python server.py
+```
 
 ## Support
 
