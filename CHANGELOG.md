@@ -2,6 +2,104 @@
 
 All notable changes to this project will be documented in this file.
 
+## [1.3.0] - 2025-11-20
+
+### Added - Playwright Browser Automation Tools
+
+#### New Features
+- **Playwright Integration**: Added 6 powerful browserless automation tools
+  - **playwright_screenshot**: Navigate to URL and capture screenshots
+    - Supports full-page screenshots
+    - Returns base64-encoded images
+    - Optional selector waiting
+    - Configurable wait times
+
+  - **playwright_scrape_text**: Extract text content from webpages
+    - Full page or selector-based extraction
+    - Perfect for web scraping workflows
+    - Returns structured text data
+
+  - **playwright_get_html**: Extract HTML content from webpages
+    - Full page or element-specific HTML
+    - Useful for parsing structured data
+    - Returns complete HTML structure
+
+  - **playwright_click**: Click elements on webpages
+    - CSS selector-based targeting
+    - Optional navigation waiting
+    - Screenshot after click capability
+    - Handles dynamic page changes
+
+  - **playwright_fill_form**: Fill and submit web forms
+    - Multi-field form filling
+    - Optional form submission
+    - Field-by-field success tracking
+    - Error handling per field
+
+  - **playwright_execute_js**: Execute custom JavaScript on pages
+    - Run arbitrary JavaScript code
+    - Returns JSON-serializable results
+    - Advanced data extraction
+    - DOM manipulation support
+
+#### Technical Implementation
+- **PlaywrightBrowserManager**: Singleton browser management
+  - Efficient browser instance reuse
+  - Automatic browser lifecycle management
+  - Headless mode for serverless environments
+  - Chromium browser with no-sandbox args for Docker/cloud compatibility
+
+#### n8n Integration
+- All tools designed for seamless n8n workflow integration
+- HTTP Request node compatible
+- JSON-RPC 2.0 protocol support
+- Base64 screenshots for direct processing
+- Structured error responses
+
+#### Dependencies
+- Added `playwright>=1.40.0` to requirements.txt
+- Chromium browser installation required (`playwright install chromium`)
+
+#### Testing
+- **test_playwright.py**: Comprehensive test suite
+  - Tests screenshot capture
+  - Tests text scraping
+  - Tests HTML extraction
+  - Tests JavaScript execution
+  - Tests element clicking
+  - Tests form filling
+  - Verifies browserless headless operation
+  - Validates base64 encoding
+  - Checks error handling
+
+#### Documentation
+- **README.md**: Extensive Playwright documentation
+  - Added Playwright tools to features list
+  - Detailed tool documentation for each tool
+  - Input/output specifications
+  - n8n integration examples
+  - HTTP Request node configuration
+  - Common use cases and examples
+  - Installation instructions for Playwright browsers
+  - Troubleshooting guide
+
+### Changed
+- Updated README title to reflect browser automation capabilities
+- Added n8n-ready badge to features
+- Enhanced installation instructions with Playwright browser setup
+- Updated "How It Works" section with Playwright details
+- Expanded use cases section with web automation examples
+
+### Technical Details
+- Browserless operation (headless mode)
+- Async/await for all Playwright operations
+- Proper error handling and structured responses
+- Base64 encoding for screenshot transport
+- Singleton pattern for browser efficiency
+- Compatible with Docker and serverless environments
+
+---
+
 ## [1.2.0] - 2025-11-11
 
 ### Added - Echo Tool & MCP Standards Compliance
@@ -153,6 +251,7 @@ All notable changes to this project will be documented in this file.
 
 | Version | Date | Key Changes |
 |---------|------|-------------|
+| **1.3.0** | 2025-11-20 | Playwright browser automation, 6 new tools, n8n integration |
 | **1.2.0** | 2025-11-11 | Echo tool, MCP standards compliance, architecture docs |
 | **1.1.0** | 2025-11-11 | Fixed Pydantic validation error, added tests |
 | **1.0.0** | 2025-11-11 | Initial release with virtual environment setup |
@@ -160,6 +259,45 @@ All notable changes to this project will be documented in this file.
 ---
 
 ## Upgrade Guide
+
+### From 1.2.0 to 1.3.0
+
+Pull the latest code and install Playwright:
+
+```bash
+git pull
+
+# Activate virtual environment
+# Windows:
+.venv\Scripts\activate
+# Linux/Mac:
+source .venv/bin/activate
+
+# Install new dependencies
+pip install -r requirements.txt
+
+# Install Playwright Chromium browser
+playwright install chromium
+
+# Restart the server
+# Windows:
+run.bat
+# Linux/Mac:
+./run.sh
+```
+
+**New Features Available:**
+- 6 Playwright browser automation tools
+- Screenshot capture: `playwright_screenshot(url, ...)`
+- Text scraping: `playwright_scrape_text(url, ...)`
+- HTML extraction: `playwright_get_html(url, ...)`
+- Element clicking: `playwright_click(url, selector, ...)`
+- Form filling: `playwright_fill_form(url, fields, ...)`
+- JavaScript execution: `playwright_execute_js(url, script, ...)`
+- n8n workflow integration support
+- Browserless headless operation
+
+**Important:** You must install Playwright browsers with `playwright install chromium` for the new tools to work.
 
 ### From 1.1.0 to 1.2.0
 
@@ -196,15 +334,20 @@ run.bat
 
 ## Future Roadmap
 
+### Completed
+- [x] Browser automation tools (Playwright) - v1.3.0
+- [x] n8n workflow integration - v1.3.0
+
 ### Planned Features
 - [ ] Additional utility tools (math, string manipulation, etc.)
-- [ ] Async/await support for I/O operations
 - [ ] Caching for expensive operations
 - [ ] Rate limiting
 - [ ] Prometheus metrics
 - [ ] Health check endpoint
 - [ ] API versioning
 - [ ] Authentication/authorization
+- [ ] PDF generation from screenshots
+- [ ] Advanced web scraping patterns (pagination, infinite scroll)
 
 ### Under Consideration
 - [ ] Plugin system for dynamic tool loading
@@ -213,6 +356,8 @@ run.bat
 - [ ] GraphQL API
 - [ ] Docker containerization
 - [ ] Kubernetes deployment configs
+- [ ] Playwright Firefox/WebKit browser support
+- [ ] Browser session persistence
 
 ---
 
@@ -229,9 +374,13 @@ cd fast-api-mcp
 # Setup virtual environment
 setup.bat  # or setup.sh
 
+# Install Playwright browsers
+playwright install chromium
+
 # Run tests
 python test_echo.py
 python test_tool.py
+python test_playwright.py
 
 # Start server
 run.bat  # or run.sh
@@ -251,7 +400,7 @@ MIT License - See LICENSE file for details
 
 ---
 
-**Last Updated:** 2025-11-11  
-**Current Version:** 1.2.0  
+**Last Updated:** 2025-11-20
+**Current Version:** 1.3.0
 **Repository:** https://github.com/mersdev/fast-api-mcp
 
