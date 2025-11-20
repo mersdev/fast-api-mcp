@@ -1,6 +1,6 @@
 # Sequential Thinking MCP Server over FastAPI
 
-A FastAPI-based MCP (Model Context Protocol) server that provides a sequential thinking tool for dynamic and reflective problem-solving through structured thinking processes.
+A FastAPI-based MCP (Model Context Protocol) server that provides a sequential thinking tool for dynamic and reflective problem-solving through structured thinking processes, plus powerful browserless Playwright automation tools for web scraping and testing.
 
 ## Features
 
@@ -9,8 +9,10 @@ A FastAPI-based MCP (Model Context Protocol) server that provides a sequential t
 - **Branching Reasoning**: Branch into alternative paths of reasoning
 - **Adaptive Planning**: Adjust the total number of thoughts dynamically
 - **Hypothesis Generation & Verification**: Generate and verify solution hypotheses
+- **Playwright Browser Automation**: Browserless web scraping, screenshots, form filling, and JavaScript execution
 - **Echo Tool**: Simple echo tool for testing and debugging MCP connections
 - **HTTP Transport**: Accessible over streamable HTTP using FastAPI
+- **n8n Ready**: All Playwright tools are designed for seamless integration with n8n workflows
 
 ## Tools
 
@@ -39,6 +41,136 @@ A simple echo tool that returns the message you send to it. Useful for testing t
   "echo": "Hello, World!",
   "length": 13,
   "status": "success"
+}
+```
+
+### Playwright Automation Tools
+
+All Playwright tools run in **browserless headless mode**, making them perfect for server environments and n8n workflows. Screenshots are returned as base64-encoded strings for easy integration.
+
+#### Tool: playwright_screenshot
+
+Navigate to a URL and capture a screenshot.
+
+**Inputs:**
+- `url` (string, required): The URL to navigate to (must include http:// or https://)
+- `wait_for_selector` (string, optional): CSS selector to wait for before screenshot
+- `wait_time` (integer, optional): Time to wait in milliseconds after page load (default: 1000)
+- `full_page` (boolean, optional): Whether to capture the full scrollable page (default: false)
+
+**Returns:**
+- `status` (string): "success" or "error"
+- `url` (string): The URL that was navigated to
+- `title` (string): Page title
+- `screenshot` (string): Base64-encoded screenshot image
+- `screenshot_size` (integer): Size of screenshot in bytes
+- `full_page` (boolean): Whether full page was captured
+
+**Example:**
+```json
+{
+  "url": "https://example.com",
+  "full_page": true
+}
+```
+
+#### Tool: playwright_scrape_text
+
+Extract text content from a webpage.
+
+**Inputs:**
+- `url` (string, required): The URL to navigate to
+- `selector` (string, optional): CSS selector to extract specific content (if None, gets all body text)
+- `wait_time` (integer, optional): Time to wait in milliseconds after page load (default: 1000)
+
+**Returns:**
+- `status` (string): "success", "warning", or "error"
+- `url` (string): The URL that was navigated to
+- `title` (string): Page title
+- `selector` (string): The selector used
+- `text` (string): Extracted text content
+- `text_length` (integer): Length of extracted text
+
+#### Tool: playwright_get_html
+
+Extract HTML content from a webpage.
+
+**Inputs:**
+- `url` (string, required): The URL to navigate to
+- `selector` (string, optional): CSS selector to extract specific HTML (if None, gets all page HTML)
+- `wait_time` (integer, optional): Time to wait in milliseconds after page load (default: 1000)
+
+**Returns:**
+- `status` (string): "success", "warning", or "error"
+- `url` (string): The URL that was navigated to
+- `title` (string): Page title
+- `selector` (string): The selector used
+- `html` (string): Extracted HTML content
+- `html_length` (integer): Length of extracted HTML
+
+#### Tool: playwright_click
+
+Navigate to a URL and click an element.
+
+**Inputs:**
+- `url` (string, required): The URL to navigate to
+- `selector` (string, required): CSS selector for the element to click
+- `wait_after_click` (integer, optional): Time to wait in milliseconds after clicking (default: 1000)
+- `screenshot` (boolean, optional): Whether to take a screenshot after clicking (default: true)
+- `wait_for_navigation` (boolean, optional): Whether to wait for navigation after click (default: false)
+
+**Returns:**
+- `status` (string): "success" or "error"
+- `original_url` (string): The original URL navigated to
+- `current_url` (string): The current URL after clicking
+- `title` (string): Page title after clicking
+- `selector` (string): The selector that was clicked
+- `clicked` (boolean): Whether the click was successful
+- `screenshot` (string, optional): Base64-encoded screenshot if requested
+- `screenshot_size` (integer, optional): Size of screenshot in bytes
+
+#### Tool: playwright_fill_form
+
+Fill form fields on a webpage.
+
+**Inputs:**
+- `url` (string, required): The URL to navigate to
+- `fields` (array, required): List of objects with 'selector' and 'value' keys
+  - Example: `[{"selector": "#email", "value": "test@example.com"}, {"selector": "#password", "value": "secret"}]`
+- `submit_selector` (string, optional): CSS selector for submit button (if None, no submit)
+- `wait_after_submit` (integer, optional): Time to wait in milliseconds after submit (default: 2000)
+- `screenshot` (boolean, optional): Whether to take a screenshot after filling (default: true)
+
+**Returns:**
+- `status` (string): "success" or "error"
+- `original_url` (string): The original URL navigated to
+- `current_url` (string): The current URL after form submission
+- `title` (string): Page title
+- `filled_fields` (array): List of objects showing which fields were filled successfully
+- `submitted` (boolean): Whether form was submitted
+- `screenshot` (string, optional): Base64-encoded screenshot if requested
+- `screenshot_size` (integer, optional): Size of screenshot in bytes
+
+#### Tool: playwright_execute_js
+
+Execute JavaScript on a webpage and get the result.
+
+**Inputs:**
+- `url` (string, required): The URL to navigate to
+- `script` (string, required): JavaScript code to execute (should return a JSON-serializable value)
+- `wait_time` (integer, optional): Time to wait in milliseconds after page load (default: 1000)
+
+**Returns:**
+- `status` (string): "success" or "error"
+- `url` (string): The URL that was navigated to
+- `title` (string): Page title
+- `result` (any): The result returned by the JavaScript code
+
+**Example:**
+```json
+{
+  "url": "https://example.com",
+  "script": "document.querySelectorAll('a').length"
 }
 ```
 
@@ -107,7 +239,12 @@ source .venv/bin/activate
 
 # Install dependencies
 pip install -r requirements.txt
+
+# Install Playwright browsers (required for Playwright tools)
+playwright install chromium
 ```
+
+**Note:** The Playwright tools require Chromium to be installed. The setup scripts will prompt you to install it, or you can run `playwright install chromium` manually after installing the Python dependencies.
 
 ## Usage
 
@@ -195,15 +332,76 @@ Add this to your `claude_desktop_config.json`:
 }
 ```
 
+### Using with n8n Workflows
+
+The Playwright tools are designed to work seamlessly with n8n. To use them:
+
+1. **Start the MCP server** (make sure it's running on the configured port)
+
+2. **In n8n, use the HTTP Request node** to call the MCP tools:
+   - Method: POST
+   - URL: `http://localhost:10000/mcp/` (or your server URL)
+   - Body: JSON with the tool name and parameters
+
+3. **Example n8n HTTP Request for screenshot:**
+   ```json
+   {
+     "jsonrpc": "2.0",
+     "id": 1,
+     "method": "tools/call",
+     "params": {
+       "name": "playwright_screenshot",
+       "arguments": {
+         "url": "https://example.com",
+         "full_page": true
+       }
+     }
+   }
+   ```
+
+4. **Example n8n HTTP Request for web scraping:**
+   ```json
+   {
+     "jsonrpc": "2.0",
+     "id": 1,
+     "method": "tools/call",
+     "params": {
+       "name": "playwright_scrape_text",
+       "arguments": {
+         "url": "https://example.com",
+         "selector": ".content"
+       }
+     }
+   }
+   ```
+
+5. **Process the response** in subsequent n8n nodes - screenshots are base64-encoded and can be saved or processed directly.
+
+**Common n8n Use Cases:**
+- Automated website monitoring and screenshots
+- Web scraping for data collection
+- Form automation for testing
+- Content extraction from dynamic websites
+- JavaScript execution for advanced data extraction
+
 ## Use Cases
 
-The Sequential Thinking tool is designed for:
+### Sequential Thinking Tool
 - Breaking down complex problems into steps
 - Planning and design with room for revision
 - Analysis that might need course correction
 - Problems where the full scope might not be clear initially
 - Tasks that need to maintain context over multiple steps
 - Situations where irrelevant information needs to be filtered out
+
+### Playwright Tools
+- **Web Scraping**: Extract text or HTML content from dynamic websites
+- **Visual Monitoring**: Capture screenshots of websites for change detection
+- **Testing**: Automate UI testing and verification
+- **Form Automation**: Fill and submit forms programmatically
+- **Data Extraction**: Execute custom JavaScript for advanced data gathering
+- **n8n Workflows**: Integrate browser automation into workflow automation
+- **API Alternative**: Access web content that doesn't have an API
 
 ## Environment Variables
 
@@ -286,6 +484,15 @@ A simple tool that:
 1. Accepts a message string
 2. Returns the message along with its length
 3. Useful for testing MCP connections
+
+### Playwright Tools
+Browserless automation tools that:
+1. Use a singleton Playwright browser instance for efficiency
+2. Run in headless mode (no GUI required)
+3. Support screenshots (base64-encoded), text/HTML extraction, clicking, form filling, and JavaScript execution
+4. Return structured JSON responses perfect for n8n workflows
+5. Handle errors gracefully with detailed error messages
+6. Use async operations for better performance
 
 ### Sequential Thinking Tool
 A complex tool that:
